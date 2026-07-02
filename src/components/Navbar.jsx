@@ -3,6 +3,7 @@ import { LogOut, Moon, Sun } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import NotificationsDropdown from './NotificationsDropdown.jsx';
 import { useAuth } from '../hooks/useAuth.js';
+import { useAlert } from '../hooks/useAlert.js';
 
 const THEME_STORAGE_KEY = 'projectsphere_theme';
 
@@ -75,6 +76,7 @@ function getPreferredTheme() {
 
 function Navbar() {
   const { dashboardPaths, isAuthenticated, logout, roleLabels, user } = useAuth();
+  const { showConfirm } = useAlert();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState(getPreferredTheme);
@@ -92,8 +94,17 @@ function Navbar() {
   const profilePicture = user?.profilePicture;
   const initials = getInitials(user?.name, user?.email);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    const confirmed = await showConfirm({
+      title: 'Log out?',
+      message: 'Are you sure you want to log out of ProjectSphere?',
+      confirmLabel: 'Log out',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    await logout();
     navigate('/login');
     setMenuOpen(false);
   };

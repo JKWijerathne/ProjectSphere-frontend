@@ -90,6 +90,12 @@ export const updateProfilePicture = async (imageFile) => {
   return response.data;
 };
 
+// Remove profile picture
+export const removeProfilePicture = async () => {
+  const response = await api.delete('/auth/profile-picture');
+  return response.data;
+};
+
 // Logout
 export const logout = async () => {
   const response = await api.post('/auth/logout');

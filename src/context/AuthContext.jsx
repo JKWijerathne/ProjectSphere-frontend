@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Login failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Registration failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -144,7 +144,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'OTP verification failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Failed to resend OTP');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -190,7 +190,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Update failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -206,7 +206,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Password change failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -231,7 +231,34 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Profile picture update failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeProfilePicture = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.removeProfilePicture();
+
+      if (response.success && response.user) {
+        const updatedAuth = {
+          ...auth,
+          user: response.user,
+        };
+        setAuth(updatedAuth);
+        saveAuth(updatedAuth);
+        return response;
+      }
+
+      return response;
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Profile picture removal failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -266,6 +293,7 @@ export function AuthProvider({ children }) {
     updateUserProfile,
     changePassword,
     updateProfilePicture,
+    removeProfilePicture,
     logout,
     clearError: () => setError(null),
   }), [auth, loading, error]);

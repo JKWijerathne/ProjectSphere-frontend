@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useAlert } from '../../hooks/useAlert.js';
@@ -25,7 +25,7 @@ function ProfileAvatar({ user, previewUrl }) {
 }
 
 export default function DashboardSidebarProfile({ navLinks }) {
-  const { user, roleLabels, changePassword, updateProfilePicture } = useAuth();
+  const { user, roleLabels, changePassword, updateProfilePicture, removeProfilePicture } = useAuth();
   const { showAlert, showConfirm } = useAlert();
   const fileInputRef = useRef(null);
 
@@ -40,6 +40,7 @@ export default function DashboardSidebarProfile({ navLinks }) {
   const [imageError, setImageError] = useState('');
   const [submittingPassword, setSubmittingPassword] = useState(false);
   const [submittingImage, setSubmittingImage] = useState(false);
+  const [removingImage, setRemovingImage] = useState(false);
 
   const hasLocalAuth = user.authProviders?.includes('local');
   const access = getRoleAccess(user.role);
@@ -51,13 +52,25 @@ export default function DashboardSidebarProfile({ navLinks }) {
     setPasswordErrors((current) => ({ ...current, [name]: '' }));
   };
 
+  useEffect(() => () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+  }, [imagePreview]);
+
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setImageError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleImageSelect = (event) => {
     const file = event.target.files?.[0];
     setImageError('');
 
     if (!file) {
-      setSelectedImage(null);
-      setImagePreview(null);
+      clearSelectedImage();
       return;
     }
 
@@ -92,9 +105,7 @@ export default function DashboardSidebarProfile({ navLinks }) {
     setSubmittingImage(true);
     try {
       await updateProfilePicture(selectedImage);
-      setSelectedImage(null);
-      setImagePreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      clearSelectedImage();
       showAlert({
         type: 'success',
         title: 'Profile picture updated',
@@ -108,6 +119,36 @@ export default function DashboardSidebarProfile({ navLinks }) {
       });
     } finally {
       setSubmittingImage(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    const confirmed = await showConfirm({
+      title: 'Remove profile picture?',
+      message: 'Your profile will show your initials until you upload another picture.',
+      confirmLabel: 'Remove picture',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    setRemovingImage(true);
+    try {
+      await removeProfilePicture();
+      clearSelectedImage();
+      showAlert({
+        type: 'success',
+        title: 'Profile picture removed',
+        message: 'Your profile now uses your initials.',
+      });
+    } catch (err) {
+      showAlert({
+        type: 'error',
+        title: 'Remove failed',
+        message: err.message,
+      });
+    } finally {
+      setRemovingImage(false);
     }
   };
 
@@ -186,20 +227,52 @@ export default function DashboardSidebarProfile({ navLinks }) {
         <form className="sidebar-form" onSubmit={handleImageSubmit}>
           <input
             ref={fileInputRef}
+            id="profile-picture-input"
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleImageSelect}
-            className="sidebar-file-input"
+            className="profile-picture-file-input"
             aria-label="Choose profile picture"
           />
-          <p className="field-hint">JPEG, PNG, GIF, or WebP. Max 5 MB.</p>
+          <div className="profile-picture-actions">
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={submittingImage || removingImage}
+            >
+              {user.profilePicture ? 'Change picture' : 'Choose picture'}
+            </button>
+            {selectedImage ? (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={clearSelectedImage}
+                disabled={submittingImage || removingImage}
+              >
+                Clear selection
+              </button>
+            ) : user.profilePicture ? (
+              <button
+                type="button"
+                className="button button-danger"
+                onClick={handleImageRemove}
+                disabled={removingImage || submittingImage}
+              >
+                {removingImage ? 'Removing…' : 'Remove picture'}
+              </button>
+            ) : null}
+          </div>
+          <p className="field-hint">
+            {selectedImage ? `Ready to upload: ${selectedImage.name}` : 'JPEG, PNG, GIF, or WebP. Max 5 MB.'}
+          </p>
           {imageError && <p className="field-error" role="alert">{imageError}</p>}
           <button
             type="submit"
             className="button button-primary sidebar-submit"
-            disabled={!selectedImage || submittingImage}
+            disabled={!selectedImage || submittingImage || removingImage}
           >
-            {submittingImage ? 'Uploading…' : 'Save picture'}
+            {submittingImage ? 'Uploading…' : 'Save new picture'}
           </button>
         </form>
       </section>
