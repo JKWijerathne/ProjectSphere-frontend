@@ -85,6 +85,8 @@ const normalizeProject = (project) => ({
 });
 
 export async function getMyProjects(token, user) {
+  void token;
+
   if (USE_BACKEND) {
     const { data } = await api.get('/projects/my-projects');
     return (data.projects || []).map(normalizeProject);
@@ -93,7 +95,7 @@ export async function getMyProjects(token, user) {
   return readProjects().filter((project) => project.ownerId === (user?._id || user?.id || 'demo-student'));
 }
 
-export async function getProjectById(id, token) {
+export async function getProjectById(id) {
   if (USE_BACKEND) {
     const { data } = await api.get(`/projects/${id}`);
     return data.project ? normalizeProject(data.project) : null;
@@ -103,6 +105,8 @@ export async function getProjectById(id, token) {
 }
 
 export async function createProject(project, token, user) {
+  void token;
+
   if (USE_BACKEND) {
     const { data } = await api.post('/projects', toFormData(project), {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -124,7 +128,7 @@ export async function createProject(project, token, user) {
   return savedProject;
 }
 
-export async function updateProject(id, project, token) {
+export async function updateProject(id, project) {
   if (USE_BACKEND) {
     const { data } = await api.put(`/projects/${id}`, toFormData(project), {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -151,7 +155,7 @@ export async function updateProject(id, project, token) {
   return updatedProject;
 }
 
-export async function deleteProject(id, token) {
+export async function deleteProject(id) {
   if (USE_BACKEND) {
     await api.delete(`/projects/${id}`);
     return true;
@@ -209,6 +213,14 @@ export async function getLecturerDashboard() {
 export async function getPendingProjects() {
   if (USE_BACKEND) {
     const { data } = await api.get('/admin/projects/pending');
+    return (data.projects || []).map(normalizeProject);
+  }
+  return [];
+}
+
+export async function getApprovedProjectsByLecturer() {
+  if (USE_BACKEND) {
+    const { data } = await api.get('/admin/projects/approved');
     return (data.projects || []).map(normalizeProject);
   }
   return [];

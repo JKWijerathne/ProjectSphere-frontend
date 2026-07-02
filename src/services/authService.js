@@ -7,6 +7,7 @@ export const registerWithOTP = async (userData) => {
     name: userData.fullName,
     email: userData.email,
     password: userData.password,
+    confirmPassword: userData.confirmPassword,
     role: userData.role,
   });
   return response.data;
@@ -50,6 +51,7 @@ export const register = async (userData) => {
     name: userData.fullName,
     email: userData.email,
     password: userData.password,
+    confirmPassword: userData.confirmPassword,
     role: userData.role,
   });
   return response.data;

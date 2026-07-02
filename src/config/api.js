@@ -1,8 +1,8 @@
 // API Configuration and Axios Instance
 import axios from 'axios';
 
-// Base API URL from environment variable
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Base API URL from environment variable with a safe local fallback
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -17,7 +17,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const authData = localStorage.getItem('projectsphere_auth');
-    
+
     if (authData) {
       try {
         const { token } = JSON.parse(authData);
