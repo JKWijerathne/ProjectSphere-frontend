@@ -7,20 +7,24 @@ import RoleRedirect from './components/RoleRedirect.jsx';
 import { AlertProvider } from './context/AlertContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import GoogleCallback from './pages/GoogleCallback.jsx';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
-import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import Projects from './pages/recruiter/Projects.jsx';
 import ProjectDetails from './pages/recruiter/ProjectDetails.jsx';
 import StudentProfile from './pages/recruiter/StudentProfile.jsx';
 import SavedProjects from './pages/recruiter/SavedProjects.jsx';
 import FollowedStudents from './pages/recruiter/FollowedStudents.jsx';
 import Register from './pages/Register.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import Notifications from './pages/Notifications.jsx';
 import MyProjects from './components/projects/MyProjects.jsx'
 import CreateProject from './components/projects/CreateProject.jsx'
 import EditProject from './components/projects/EditProject.jsx'
 import Approvals from './pages/lecturer/Approvals.jsx';
+import ApprovedProjects from './pages/lecturer/ApprovedProjects.jsx';
 
 function App() {
   return (
@@ -37,6 +41,9 @@ function App() {
                 <Route path="/projects/:id" element={<ProjectDetails />} />
                 <Route path="/students/:id" element={<StudentProfile />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/google/callback" element={<GoogleCallback />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/register" element={<Register />} />
 
                 <Route
@@ -101,6 +108,22 @@ function App() {
                   element={(
                     <ProtectedRoute allowedRoles={['Lecturer', 'Admin']}>
                       <Approvals />
+                    </ProtectedRoute>
+                  )}
+                />
+                <Route
+                  path="/lecturer/approved-projects"
+                  element={(
+                    <ProtectedRoute allowedRoles={['Lecturer', 'Admin']}>
+                      <ApprovedProjects />
+                    </ProtectedRoute>
+                  )}
+                />
+                <Route
+                  path="/notifications"
+                  element={(
+                    <ProtectedRoute>
+                      <Notifications />
                     </ProtectedRoute>
                   )}
                 />

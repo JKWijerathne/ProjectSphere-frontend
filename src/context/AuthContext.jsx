@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Login failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
       console.error('Registration error in AuthContext:', err);
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Registration failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ export function AuthProvider({ children }) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'OTP verification failed');
       console.error('OTP verification error:', errorMsg);
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -179,7 +179,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Failed to resend OTP');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -188,6 +188,34 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => {
     // Redirect to backend Google OAuth
     authService.loginWithGoogle();
+  };
+
+  const completeGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.handleGoogleCallback();
+
+      if (response.token && response.user) {
+        const payload = {
+          token: response.token,
+          user: response.user,
+        };
+
+        setAuth(payload);
+        saveAuth(payload);
+        return payload;
+      }
+
+      throw new Error('Google authentication failed');
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Google authentication failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateUserProfile = async (profileData) => {
@@ -209,7 +237,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Update failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -225,7 +253,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Password change failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -250,7 +278,52 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Profile picture update failed');
       setError(errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeProfilePicture = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.removeProfilePicture();
+
+      if (response.success && response.user) {
+        const updatedAuth = {
+          ...auth,
+          user: response.user,
+        };
+        setAuth(updatedAuth);
+        saveAuth(updatedAuth);
+        return response;
+      }
+
+      return response;
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Profile picture removal failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.deleteAccount();
+      clearAuth();
+      setAuth(null);
+      return response;
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Account deletion failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     } finally {
       setLoading(false);
     }
@@ -282,9 +355,12 @@ export function AuthProvider({ children }) {
     verifyOTP,
     resendOTP,
     loginWithGoogle,
+    completeGoogleLogin,
     updateUserProfile,
     changePassword,
     updateProfilePicture,
+    removeProfilePicture,
+    deleteAccount,
     logout,
     clearError: () => setError(null),
   }), [auth, loading, error]);

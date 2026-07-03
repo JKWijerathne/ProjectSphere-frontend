@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getPendingProjects, approveProject, rejectProject } from '../../services/projectService.js';
-import { Check, X, ExternalLink, Loader2, Sparkles, Folder, RefreshCw } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { useAlert } from '../../hooks/useAlert.js';
+import { getApprovedProjectsByLecturer } from '../../services/projectService.js';
 
 function getProjectId(project) {
   return project.id || project._id;
@@ -13,23 +13,22 @@ function getErrorMessage(err, fallback) {
   return err?.response?.data?.error || err?.message || fallback;
 }
 
-export default function Approvals() {
+export default function ApprovedProjects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState(null);
-  const { showAlert, showConfirm } = useAlert();
+  const { showAlert } = useAlert();
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getPendingProjects();
+      const data = await getApprovedProjectsByLecturer();
       setProjects(data || []);
     } catch (err) {
-      console.error('Failed to load pending projects:', err);
+      console.error('Failed to load approved projects:', err);
       showAlert({
         type: 'error',
         title: 'Error',
-        message: getErrorMessage(err, 'Failed to fetch pending projects.'),
+        message: getErrorMessage(err, 'Failed to fetch approved projects.'),
       });
     } finally {
       setLoading(false);
@@ -41,63 +40,12 @@ export default function Approvals() {
     return () => window.clearTimeout(fetchId);
   }, [fetchProjects]);
 
-  const handleApprove = async (project) => {
-    const id = getProjectId(project);
-    const confirmed = await showConfirm({
-      title: 'Approve project?',
-      message: `Approve "${project.title}" and make it visible to recruiters?`,
-      confirmLabel: 'Approve',
-    });
-    if (!confirmed) return;
-
-    setProcessingId(id);
-    try {
-      const res = await approveProject(id);
-      if (res.success) {
-        showAlert({ type: 'success', title: 'Approved', message: 'Project approved successfully.' });
-        setProjects((prev) => prev.filter((p) => getProjectId(p) !== id));
-      } else {
-        showAlert({ type: 'error', title: 'Error', message: res.error || 'Failed to approve project.' });
-      }
-    } catch (err) {
-      showAlert({ type: 'error', title: 'Error', message: getErrorMessage(err, 'Approval request failed.') });
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleReject = async (project) => {
-    const id = getProjectId(project);
-    const confirmed = await showConfirm({
-      title: 'Reject project?',
-      message: `Reject "${project.title}"? The student can revise and resubmit later.`,
-      confirmLabel: 'Reject',
-      variant: 'danger',
-    });
-    if (!confirmed) return;
-
-    setProcessingId(id);
-    try {
-      const res = await rejectProject(id);
-      if (res.success) {
-        showAlert({ type: 'warning', title: 'Rejected', message: 'Project rejected successfully.' });
-        setProjects((prev) => prev.filter((p) => getProjectId(p) !== id));
-      } else {
-        showAlert({ type: 'error', title: 'Error', message: res.error || 'Failed to reject project.' });
-      }
-    } catch (err) {
-      showAlert({ type: 'error', title: 'Error', message: getErrorMessage(err, 'Rejection request failed.') });
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin mb-4" />
-          <p className="text-slate-500 text-sm">Loading submissions...</p>
+          <p className="text-slate-500 text-sm">Loading approved projects...</p>
         </div>
       </div>
     );
@@ -110,15 +58,15 @@ export default function Approvals() {
           <div>
             <span className="badge blue mb-2 inline-block">Lecturer Workspace</span>
             <h1 className="section-title text-3xl font-extrabold text-slate-800 flex items-center gap-2">
-              <Folder className="w-8 h-8 text-blue-600" /> Pending Approvals
+              <CheckCircle2 className="w-8 h-8 text-emerald-600" /> Approved Projects
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              Review, approve, or reject student project submissions before they go public.
+              Projects you approved are collected here for quick review later.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="bg-slate-200 text-slate-700 font-bold px-3 py-1 rounded-full text-sm">
-              {projects.length} pending
+            <span className="bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded-full text-sm">
+              {projects.length} approved
             </span>
             <button
               type="button"
@@ -134,11 +82,11 @@ export default function Approvals() {
         {projects.length === 0 ? (
           <div className="panel bg-white border border-slate-100 rounded-2xl p-12 text-center shadow-sm">
             <Sparkles className="w-16 h-16 mx-auto text-yellow-400 mb-4 animate-pulse" />
-            <h2 className="text-xl font-bold text-slate-700 mb-2">All Caught Up!</h2>
+            <h2 className="text-xl font-bold text-slate-700 mb-2">No Approved Projects Yet</h2>
             <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-              There are no project submissions currently waiting for your review. Check back later!
+              When you approve pending submissions, those projects will appear here.
             </p>
-            <Link className="button button-secondary" to="/dashboard/lecturer">Back to dashboard</Link>
+            <Link className="button button-primary" to="/lecturer/approvals">Open approvals</Link>
           </div>
         ) : (
           <div className="space-y-6">
@@ -147,7 +95,6 @@ export default function Approvals() {
               const ownerName = project.owner?.name || project.student?.name || 'Student';
               const ownerEmail = project.owner?.email || project.student?.email || '';
               const thumbnail = project.thumbnailUrl || project.thumbnail;
-              const isProcessing = processingId === id;
 
               return (
                 <article key={id} className="panel bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -165,35 +112,14 @@ export default function Approvals() {
                     <div className="lecturer-approval-body">
                       <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                         <div>
-                          <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-2 inline-block">
-                            {project.category || 'General'}
+                          <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full mb-2 inline-block">
+                            Approved
                           </span>
                           <h2 className="text-xl font-bold text-slate-800">{project.title}</h2>
                           <p className="text-slate-500 text-xs mt-1">
                             Submitted by: <strong className="text-slate-700">{ownerName}</strong>
                             {ownerEmail ? ` (${ownerEmail})` : ''}
                           </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(project)}
-                            disabled={processingId !== null}
-                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
-                          >
-                            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReject(project)}
-                            disabled={processingId !== null}
-                            className="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-sm"
-                          >
-                            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                            Reject
-                          </button>
                         </div>
                       </div>
 
@@ -213,7 +139,7 @@ export default function Approvals() {
 
                       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs text-slate-400">
                         <span className="italic">
-                          Submitted on {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
+                          Approved on {project.approvedAt ? new Date(project.approvedAt).toLocaleDateString() : 'N/A'}
                         </span>
                         <div className="flex gap-4">
                           <Link

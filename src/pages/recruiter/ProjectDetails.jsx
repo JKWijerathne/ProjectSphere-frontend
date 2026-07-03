@@ -484,7 +484,7 @@ export default function ProjectDetails() {
           <div className="space-y-6">
 
             {/* Student card */}
-            <div className="bg-white rounded-2xl shadow-md p-6 lg:sticky lg:top-6">
+            <div className="bg-white rounded-2xl shadow-md p-6">
               <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
                 Created by
               </h2>

@@ -8,6 +8,7 @@ const initialForm = {
   fullName: '',
   email: '',
   password: '',
+  confirmPassword: '',
   role: 'Student',
   studentId: '',
   department: '',
@@ -58,6 +59,16 @@ function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (form.password !== form.confirmPassword) {
+      showAlert({
+        type: 'error',
+        title: 'Passwords do not match',
+        message: 'Please make sure both password fields are the same.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     console.log('=== Registration Form Submit ===');
@@ -252,6 +263,22 @@ function Register() {
                 />
               </div>
 
+              <div className="form-field">
+                <label htmlFor="register-confirm-password">Confirm password</label>
+                <input
+                  id="register-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Re-enter your password"
+                  value={form.confirmPassword}
+                  onChange={updateField}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
               <div className="form-field">
                 <label htmlFor="register-role">Account type</label>
                 <select id="register-role" name="role" value={form.role} onChange={updateRole}>

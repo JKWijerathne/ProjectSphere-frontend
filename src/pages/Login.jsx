@@ -13,7 +13,7 @@ function Login() {
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showAlert } = useAlert();
-  const { dashboardPaths, login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const errorShownRef = useRef(false);
@@ -29,7 +29,7 @@ function Login() {
     }
   }, [location.search, navigate, showAlert]);
 
-  const redirectAfterAuth = (role) => {
+  const redirectAfterAuth = () => {
     const fallback = '/';
     navigate(location.state?.from?.pathname || fallback, { replace: true });
   };
@@ -64,6 +64,10 @@ function Login() {
     } catch {
       showAlert({ type: 'error', title: 'Google sign-in failed', message: 'Google login could not be started.' });
     }
+  };
+
+  const handleForgotPassword = () => {
+    navigate('/forgot-password');
   };
 
   return (
@@ -161,8 +165,17 @@ function Login() {
               <div>
                 <label className="field-hint"><input type="checkbox" /> Remember me</label>
               </div>
-              <div>
-                <a href="#" className="field-hint">Forgot password?</a>
+              <div className="forgot-password-wrap">
+                <a
+                  href="/forgot-password"
+                  className="forgot-password-action"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleForgotPassword();
+                  }}
+                >
+                  Forgot password?
+                </a>
               </div>
             </div>
 
