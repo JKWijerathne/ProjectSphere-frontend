@@ -710,6 +710,20 @@ img {
   gap: 8px;
 }
 
+.nav-profile-link {
+  border-radius: 14px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.nav-profile-link:hover,
+.nav-profile-link:focus-visible {
+  background: var(--nav-pill-bg);
+  box-shadow: 0 0 0 4px var(--nav-pill-ring);
+  outline: none;
+}
+
 .nav-avatar {
   width: 42px;
   height: 42px;
@@ -1545,6 +1559,8 @@ img {
 }
 
 .form-actions-row {
+  position: relative;
+  z-index: 3;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1656,6 +1672,36 @@ img {
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.45;
+}
+
+.forgot-password-wrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.forgot-password-action {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 4px 10px;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.25;
+  position: relative;
+  z-index: 4;
+  text-align: right;
+  text-decoration: none;
+  user-select: none;
+}
+
+.forgot-password-action:hover,
+.forgot-password-action:focus-visible {
+  color: var(--primary);
+  outline: none;
+  text-decoration: underline;
 }
 
 .form-panel {

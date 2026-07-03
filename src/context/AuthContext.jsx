@@ -171,6 +171,34 @@ export function AuthProvider({ children }) {
     authService.loginWithGoogle();
   };
 
+  const completeGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.handleGoogleCallback();
+
+      if (response.token && response.user) {
+        const payload = {
+          token: response.token,
+          user: response.user,
+        };
+
+        setAuth(payload);
+        saveAuth(payload);
+        return payload;
+      }
+
+      throw new Error('Google authentication failed');
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Google authentication failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateUserProfile = async (profileData) => {
     setLoading(true);
     setError(null);
@@ -264,6 +292,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const deleteAccount = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authService.deleteAccount();
+      clearAuth();
+      setAuth(null);
+      return response;
+    } catch (err) {
+      const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Account deletion failed');
+      setError(errorMsg);
+      throw new Error(errorMsg, { cause: err });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       if (auth?.token && !auth.token.startsWith('session-token-')) {
@@ -290,10 +336,12 @@ export function AuthProvider({ children }) {
     verifyOTP,
     resendOTP,
     loginWithGoogle,
+    completeGoogleLogin,
     updateUserProfile,
     changePassword,
     updateProfilePicture,
     removeProfilePicture,
+    deleteAccount,
     logout,
     clearError: () => setError(null),
   }), [auth, loading, error]);

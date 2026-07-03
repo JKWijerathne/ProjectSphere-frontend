@@ -138,7 +138,13 @@ function Navbar() {
   };
 
   const accountSummary = (
-    <div className="nav-profile" title={displayName}>
+    <NavLink
+      className="nav-profile nav-profile-link"
+      to={dashboardPath}
+      title={displayName}
+      onClick={close}
+      aria-label={`Open ${displayName}'s dashboard`}
+    >
       <span className="nav-avatar" aria-hidden="true">
         {profilePicture ? (
           <img src={profilePicture} alt="" />
@@ -152,7 +158,7 @@ function Navbar() {
           <span className={getRoleChipClass(currentRole)}>{roleLabel}</span>
         )}
       </span>
-    </div>
+    </NavLink>
   );
 
   const renderThemeToggle = () => (

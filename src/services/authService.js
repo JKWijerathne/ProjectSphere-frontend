@@ -79,6 +79,61 @@ export const changePassword = async ({ currentPassword, newPassword, confirmPass
   return response.data;
 };
 
+// Request password reset email
+export const forgotPassword = async (email) => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
+  const payload = { email, origin };
+  const resetPaths = [
+    '/auth/forgot-password',
+    '/forgot-password',
+    'http://localhost:5001/api/auth/forgot-password',
+    'http://127.0.0.1:5001/api/auth/forgot-password',
+  ];
+  let lastError;
+
+  for (const path of resetPaths) {
+    try {
+      const response = await api.post(path, payload);
+      return response.data;
+    } catch (error) {
+      lastError = error;
+      const message = typeof error === 'string' ? error : error?.message;
+      if (!/route not found|network error/i.test(message || '')) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
+
+// Reset password with email token
+export const resetPassword = async ({ token, password, confirmPassword }) => {
+  const payload = { password, confirmPassword };
+  const resetPaths = [
+    `/auth/reset-password/${token}`,
+    `/reset-password/${token}`,
+    `http://localhost:5001/api/auth/reset-password/${token}`,
+    `http://127.0.0.1:5001/api/auth/reset-password/${token}`,
+  ];
+  let lastError;
+
+  for (const path of resetPaths) {
+    try {
+      const response = await api.put(path, payload);
+      return response.data;
+    } catch (error) {
+      lastError = error;
+      const message = typeof error === 'string' ? error : error?.message;
+      if (!/route not found|network error/i.test(message || '')) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 // Upload profile picture
 export const updateProfilePicture = async (imageFile) => {
   const formData = new FormData();
@@ -93,6 +148,12 @@ export const updateProfilePicture = async (imageFile) => {
 // Remove profile picture
 export const removeProfilePicture = async () => {
   const response = await api.delete('/auth/profile-picture');
+  return response.data;
+};
+
+// Delete current account
+export const deleteAccount = async () => {
+  const response = await api.delete('/auth/account');
   return response.data;
 };
 

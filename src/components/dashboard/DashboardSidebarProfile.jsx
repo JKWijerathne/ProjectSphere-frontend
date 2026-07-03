@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useAlert } from '../../hooks/useAlert.js';
 import {
@@ -25,8 +25,9 @@ function ProfileAvatar({ user, previewUrl }) {
 }
 
 export default function DashboardSidebarProfile({ navLinks }) {
-  const { user, roleLabels, changePassword, updateProfilePicture, removeProfilePicture } = useAuth();
+  const { user, roleLabels, changePassword, updateProfilePicture, removeProfilePicture, deleteAccount } = useAuth();
   const { showAlert, showConfirm } = useAlert();
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [passwordForm, setPasswordForm] = useState({
@@ -41,6 +42,7 @@ export default function DashboardSidebarProfile({ navLinks }) {
   const [submittingPassword, setSubmittingPassword] = useState(false);
   const [submittingImage, setSubmittingImage] = useState(false);
   const [removingImage, setRemovingImage] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const hasLocalAuth = user.authProviders?.includes('local');
   const access = getRoleAccess(user.role);
@@ -183,6 +185,36 @@ export default function DashboardSidebarProfile({ navLinks }) {
       });
     } finally {
       setSubmittingPassword(false);
+    }
+  };
+
+  const handleAccountDelete = async () => {
+    const confirmed = await showConfirm({
+      title: 'Delete account?',
+      message: 'This permanently deletes your account and removes every project you uploaded.',
+      confirmLabel: 'Delete account',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    setDeletingAccount(true);
+    try {
+      await deleteAccount();
+      showAlert({
+        type: 'success',
+        title: 'Account deleted',
+        message: 'Your account and uploaded projects were removed.',
+      });
+      navigate('/login', { replace: true });
+    } catch (err) {
+      showAlert({
+        type: 'error',
+        title: 'Delete failed',
+        message: err.message,
+      });
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -349,6 +381,21 @@ export default function DashboardSidebarProfile({ navLinks }) {
           </p>
         </section>
       )}
+
+      <section className="sidebar-section" aria-labelledby="danger-zone-heading">
+        <h3 id="danger-zone-heading" className="sidebar-section-title">Account removal</h3>
+        <p className="field-hint">
+          Delete your account and remove the projects you uploaded from ProjectSphere.
+        </p>
+        <button
+          type="button"
+          className="button button-danger sidebar-submit"
+          onClick={handleAccountDelete}
+          disabled={deletingAccount}
+        >
+          {deletingAccount ? 'Deleting…' : 'Delete account'}
+        </button>
+      </section>
     </>
   );
 }
