@@ -218,13 +218,16 @@ export async function getPendingProjects() {
   return [];
 }
 
-export async function getApprovedProjectsByLecturer() {
 export async function getApprovedProjects() {
   if (USE_BACKEND) {
     const { data } = await api.get('/admin/projects/approved');
     return (data.projects || []).map(normalizeProject);
   }
   return [];
+}
+
+export async function getApprovedProjectsByLecturer() {
+  return getApprovedProjects();
 }
 
 export async function approveProject(projectId) {
