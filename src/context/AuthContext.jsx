@@ -98,22 +98,33 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
 
+    console.log('=== AuthContext.register() ===');
+    console.log('Form data received:', formData);
+
     try {
       // Use OTP registration flow
       const response = await authService.registerWithOTP(formData);
       
+      console.log('Backend response:', response);
+      console.log('Response success:', response.success);
+      console.log('Response message:', response.message);
+      
       if (response.success) {
         // Return OTP sent confirmation
-        return {
+        const result = {
           success: true,
           message: response.message,
           email: formData.email,
           requiresOTP: true
         };
+        
+        console.log('Returning result:', result);
+        return result;
       } else {
         throw new Error(response.message || 'Registration failed');
       }
     } catch (err) {
+      console.error('Registration error in AuthContext:', err);
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'Registration failed');
       setError(errorMsg);
       throw new Error(errorMsg, { cause: err });
@@ -127,7 +138,11 @@ export function AuthProvider({ children }) {
     setError(null);
 
     try {
+      console.log('=== Verifying OTP ===');
+      console.log('Email:', email);
+      
       const response = await authService.verifyOTP(email, otp);
+      console.log('OTP verification response:', response);
       
       if (response.success && response.token && response.user) {
         const payload = {
@@ -135,14 +150,18 @@ export function AuthProvider({ children }) {
           user: response.user,
         };
 
+        console.log('Setting auth state:', payload);
         setAuth(payload);
         saveAuth(payload);
+        console.log('Auth state saved to localStorage');
+        
         return payload;
       } else {
         throw new Error(response.message || 'OTP verification failed');
       }
     } catch (err) {
       const errorMsg = typeof err === 'string' ? err : (err.response?.data?.error || err.message || 'OTP verification failed');
+      console.error('OTP verification error:', errorMsg);
       setError(errorMsg);
       throw new Error(errorMsg, { cause: err });
     } finally {

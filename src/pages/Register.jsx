@@ -71,22 +71,38 @@ function Register() {
 
     setIsSubmitting(true);
 
+    console.log('=== Registration Form Submit ===');
+    console.log('Form data:', {
+      fullName: form.fullName,
+      email: form.email,
+      role: form.role
+    });
+
     try {
       const result = await register({
         ...form,
         department: form.department === 'Other' ? form.customDepartment : form.department,
       });
       
+      console.log('Registration result:', result);
+      console.log('requiresOTP:', result.requiresOTP);
+      console.log('Email:', result.email);
+      
       // Check if OTP verification is required
       if (result.requiresOTP) {
+        console.log('✅ OTP required - showing OTP screen');
         setRegistrationEmail(form.email);
         setShowOTP(true);
       } else if (result.user && result.token) {
         // Direct login (no OTP required)
+        console.log('✅ Direct login - no OTP required');
         showAlert({ type: 'success', title: 'Account created!', message: `Welcome to ProjectSphere, ${result.user.name}.` });
         navigate(dashboardPaths[result.user.role] || '/', { replace: true });
+      } else {
+        console.log('⚠️ Unexpected result format:', result);
       }
     } catch (err) {
+      console.error('Registration error:', err);
       showAlert({ type: 'error', title: 'Registration failed', message: err.message });
     } finally {
       setIsSubmitting(false);
@@ -94,8 +110,33 @@ function Register() {
   };
 
   const handleOTPSuccess = (user) => {
-    // Navigate to dashboard after successful OTP verification
-    navigate('/', { replace: true });
+    console.log('=== OTP Success Handler ===');
+    console.log('User data received:', user);
+    console.log('User role:', user.role);
+    
+    // Show success alert
+    showAlert({ 
+      type: 'success', 
+      title: 'Account created!', 
+      message: `Welcome to ProjectSphere, ${user.name}!` 
+    });
+    
+    // Get dashboard path for user role
+    const dashboardPath = dashboardPaths[user.role];
+    console.log('Dashboard path:', dashboardPath);
+    
+    if (!dashboardPath) {
+      console.error('No dashboard path found for role:', user.role);
+      window.location.href = '/';
+      return;
+    }
+    
+    // Use window.location for reliable navigation after registration
+    // This ensures auth state is fully available before protected route check
+    setTimeout(() => {
+      console.log('Redirecting to:', dashboardPath);
+      window.location.href = dashboardPath;
+    }, 1500);
   };
 
   const handleOTPCancel = () => {

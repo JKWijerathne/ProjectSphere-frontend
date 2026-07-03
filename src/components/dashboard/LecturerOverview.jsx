@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getLecturerDashboard } from '../../services/projectService.js';
+import { getLecturerDashboard, getAllProjects } from '../../services/projectService.js';
 
 function getProjectId(project) {
   return project.id || project._id;
@@ -9,29 +9,45 @@ function getProjectId(project) {
 export default function LecturerOverview() {
   const [stats, setStats] = useState({ pending: 0, approved: 0, rejected: 0 });
   const [recentPending, setRecentPending] = useState([]);
+  const [recentApproved, setRecentApproved] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
 
-    getLecturerDashboard()
-      .then((data) => {
+    Promise.all([
+      getLecturerDashboard(),
+      getAllProjects()
+    ])
+      .then(([dashboardData, allProjects]) => {
         if (!active) return;
-        const projectStats = data?.stats?.projects || {};
+        
+        // Get stats
+        const projectStats = dashboardData?.stats?.projects || {};
         setStats({
           pending: projectStats.pending ?? 0,
           approved: projectStats.approved ?? 0,
           rejected: projectStats.rejected ?? 0,
         });
-        const pending = (data?.recentProjects || []).filter(
+        
+        // Get recent pending projects
+        const pending = (dashboardData?.recentProjects || []).filter(
           (project) => (project.status || 'Pending') === 'Pending'
         );
         setRecentPending(pending.slice(0, 4));
+
+        // Get recent approved projects
+        const approved = (allProjects || [])
+          .filter(p => p.status === 'Approved')
+          .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+          .slice(0, 4);
+        setRecentApproved(approved);
       })
       .catch(() => {
         if (active) {
           setStats({ pending: 0, approved: 0, rejected: 0 });
           setRecentPending([]);
+          setRecentApproved([]);
         }
       })
       .finally(() => {
@@ -101,6 +117,39 @@ export default function LecturerOverview() {
                       </p>
                     </div>
                     <Link to="/lecturer/approvals" className="recent-link">Review</Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* New: Approved Projects Section */}
+        <div className="panel dashboard-content-panel">
+          <div className="content-panel-header">
+            <p className="eyebrow">Recently approved</p>
+            <h2>Approved projects</h2>
+          </div>
+
+          {loading ? (
+            <p className="content-panel-empty">Loading approved projects…</p>
+          ) : recentApproved.length === 0 ? (
+            <p className="content-panel-empty">No approved projects yet.</p>
+          ) : (
+            <ul className="recent-list">
+              {recentApproved.map((project) => {
+                const id = getProjectId(project);
+                return (
+                  <li key={id} className="recent-list-item">
+                    <div>
+                      <strong>{project.title}</strong>
+                      <span className="status-pill status-approved">Approved</span>
+                      <p className="lecturer-recent-meta">
+                        {project.owner?.name || project.student?.name || 'Student'}
+                        {project.category ? ` · ${project.category}` : ''}
+                      </p>
+                    </div>
+                    <Link to={`/projects/${id}`} className="recent-link">View</Link>
                   </li>
                 );
               })}

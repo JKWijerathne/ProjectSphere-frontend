@@ -36,12 +36,16 @@ export default function OTPVerification({ email, onSuccess, onCancel }) {
       const result = await verifyOTP(email, otp);
       setSuccess('Account verified successfully!');
       
-      // Call onSuccess callback with user data
+      // Log for debugging
+      console.log('OTP Verification result:', result);
+      console.log('User data:', result.user);
+      
+      // Call onSuccess callback with user data after a short delay
       setTimeout(() => {
         if (onSuccess && result.user) {
           onSuccess(result.user);
         }
-      }, 1000);
+      }, 1500); // Increased to 1.5 seconds to allow success message to show
     } catch (err) {
       setError(err.message || 'Invalid OTP code. Please try again.');
     } finally {
